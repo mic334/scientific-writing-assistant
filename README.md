@@ -6,7 +6,7 @@ A local retrieval-based scientific drafting assistant for producing a first-pass
 - abstract
 - paper outline
 
-The project is intentionally scoped as a drafting aid, not a full paper writer. It uses structured user input plus local reference documents written by the same author to retrieve stylistically and thematically relevant snippets. The MVP uses a deterministic rule-guided generator and also saves a structured prompt that can later be used with a local LLM.
+The project is intentionally scoped as a drafting aid, not a full paper writer. It uses structured user input plus local reference documents written by the same author to retrieve stylistically and thematically relevant snippets. The MVP includes a deterministic rule-guided generator and an optional local Ollama/Llama backend.
 
 ## What It Does
 
@@ -110,7 +110,10 @@ Edit `config.json`:
     "molecular materials"
   ],
   "reference_docs_folder": "data/references",
-  "top_k": 3
+  "top_k": 3,
+  "generation_backend": "template",
+  "llama_model": "llama3.1",
+  "ollama_url": "http://127.0.0.1:11434"
 }
 ```
 
@@ -125,6 +128,50 @@ Outputs are saved to:
 ```text
 outputs/draft_output.json
 outputs/draft_output.md
+```
+
+## Inspect Reference Loading
+
+To check whether local references, including PDFs, can be read:
+
+```bash
+python src/main.py --inspect-references --config config.json
+```
+
+This prints each loaded file with character counts. If a PDF is scanned/image-only, `pypdf` may not extract useful text unless OCR text is already embedded in the file.
+
+## Optional Local Llama Generation
+
+By default, the project uses the deterministic template generator:
+
+```json
+"generation_backend": "template"
+```
+
+To use a local Llama model through Ollama, first make sure Ollama is running locally and that a Llama model is installed. Then set:
+
+```json
+"generation_backend": "ollama",
+"llama_model": "llama3.1",
+"ollama_url": "http://127.0.0.1:11434"
+```
+
+Run:
+
+```bash
+python src/main.py --config config.json
+```
+
+You can also choose the backend from the command line:
+
+```bash
+python src/main.py --config config.json --generation-backend ollama --llama-model llama3.1
+```
+
+If Ollama is not running or the selected model is missing, the app falls back to the template generator unless you pass:
+
+```bash
+python src/main.py --config config.json --generation-backend ollama --no-template-fallback
 ```
 
 You can also provide values from the command line:
@@ -160,4 +207,4 @@ python src/main.py --list-journals
 - Add journal profiles in `src/journal_adapter.py`.
 - Improve retrieval in `src/retriever.py`.
 - Replace or extend template generation in `src/generator.py`.
-- Add a local LLM backend later by consuming the structured prompt generated in `src/prompt_builder.py`.
+- Extend the local LLM backend in `src/llm_generator.py`.

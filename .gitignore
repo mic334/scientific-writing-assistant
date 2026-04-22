@@ -5,3 +5,4 @@ __pycache__/
 outputs/*.json
 outputs/*.md
 !outputs/.gitkeep
+data/references/*.pdf

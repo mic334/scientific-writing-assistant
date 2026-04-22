@@ -16,5 +16,8 @@
     "molecular materials"
   ],
   "reference_docs_folder": "data/references",
-  "top_k": 3
+  "top_k": 3,
+  "generation_backend": "template",
+  "llama_model": "llama3.1",
+  "ollama_url": "http://127.0.0.1:11434"
 }

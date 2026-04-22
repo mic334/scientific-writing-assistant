@@ -35,6 +35,10 @@ def load_user_input_from_config(config_path: Path) -> UserInput:
     )
 
 
+def load_config(config_path: Path) -> dict:
+    return json.loads(config_path.expanduser().resolve().read_text(encoding="utf-8"))
+
+
 def save_json(output: DraftOutput, path: Path) -> None:
     path.write_text(json.dumps(output.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8")
 
@@ -64,7 +68,35 @@ def save_markdown(output: DraftOutput, path: Path) -> None:
     path.write_text(markdown, encoding="utf-8")
 
 
-def run_pipeline(user_input: UserInput, output_dir: Path, model_name: str) -> DraftOutput:
+def inspect_references(reference_folder: str | Path) -> dict:
+    docs = load_reference_documents(reference_folder)
+    summary = {
+        "reference_folder": str(Path(reference_folder).expanduser().resolve()),
+        "document_count": len(docs),
+        "documents": [],
+    }
+    for doc in docs:
+        cleaned = clean_text(doc.content)
+        summary["documents"].append(
+            {
+                "filename": doc.filename,
+                "characters": len(doc.content),
+                "cleaned_characters": len(cleaned),
+                "has_text": bool(cleaned.strip()),
+            }
+        )
+    return summary
+
+
+def run_pipeline(
+    user_input: UserInput,
+    output_dir: Path,
+    model_name: str,
+    generation_backend: str = "template",
+    llama_model: str = "llama3.1",
+    ollama_url: str = "http://127.0.0.1:11434",
+    fallback_to_template: bool = True,
+) -> DraftOutput:
     from embedder import embed_documents, embed_query, load_embedding_model
     from retriever import retrieve_top_k
 
@@ -82,7 +114,26 @@ def run_pipeline(user_input: UserInput, output_dir: Path, model_name: str) -> Dr
     journal_rules = get_journal_rules(user_input.journal)
     context = build_drafting_context(user_input, journal_rules, retrieved_docs)
     prompt = build_structured_prompt(context)
-    output = generate_draft(context, prompt)
+
+    if generation_backend == "template":
+        output = generate_draft(context, prompt)
+    elif generation_backend == "ollama":
+        try:
+            from llm_generator import generate_draft_with_ollama
+
+            output = generate_draft_with_ollama(
+                context=context,
+                prompt=prompt,
+                model=llama_model,
+                ollama_url=ollama_url,
+            )
+        except Exception as exc:
+            if not fallback_to_template:
+                raise
+            print(f"Warning: local LLM generation failed, using template fallback. {exc}")
+            output = generate_draft(context, prompt)
+    else:
+        raise ValueError(f"Unsupported generation backend: {generation_backend}")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     save_json(output, output_dir / "draft_output.json")
@@ -98,6 +149,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--config", type=Path, default=Path("config.json"))
     parser.add_argument("--output-dir", type=Path, default=Path("outputs"))
     parser.add_argument("--model", default="sentence-transformers/all-MiniLM-L6-v2")
+    parser.add_argument("--generation-backend", choices=["template", "ollama"])
+    parser.add_argument("--llama-model")
+    parser.add_argument("--ollama-url")
+    parser.add_argument("--no-template-fallback", action="store_true")
+    parser.add_argument("--inspect-references", action="store_true")
     parser.add_argument("--list-journals", action="store_true")
     parser.add_argument("--journal")
     parser.add_argument("--topic")
@@ -117,6 +173,17 @@ def main() -> None:
         print("\n".join(list_supported_journals()))
         return
 
+    config_data = {}
+    if args.config.exists():
+        config_data = load_config(args.config)
+
+    if args.inspect_references:
+        reference_folder = args.references or config_data.get("reference_docs_folder", "data/references")
+        if not Path(reference_folder).expanduser().is_absolute():
+            reference_folder = args.config.expanduser().resolve().parent / reference_folder
+        print(json.dumps(inspect_references(reference_folder), indent=2, ensure_ascii=False))
+        return
+
     if args.topic:
         user_input = UserInput(
             journal=args.journal or "Generic Scientific Journal",
@@ -130,7 +197,19 @@ def main() -> None:
     else:
         user_input = load_user_input_from_config(args.config)
 
-    output = run_pipeline(user_input, args.output_dir, args.model)
+    generation_backend = args.generation_backend or config_data.get("generation_backend", "template")
+    llama_model = args.llama_model or config_data.get("llama_model", "llama3.1")
+    ollama_url = args.ollama_url or config_data.get("ollama_url", "http://127.0.0.1:11434")
+
+    output = run_pipeline(
+        user_input=user_input,
+        output_dir=args.output_dir,
+        model_name=args.model,
+        generation_backend=generation_backend,
+        llama_model=llama_model,
+        ollama_url=ollama_url,
+        fallback_to_template=not args.no_template_fallback,
+    )
     print(json.dumps({"saved": str(args.output_dir), **asdict(output)}, indent=2, ensure_ascii=False))
 
 
