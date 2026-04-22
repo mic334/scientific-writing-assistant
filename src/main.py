@@ -69,6 +69,59 @@ def save_markdown(output: DraftOutput, path: Path) -> None:
     path.write_text(markdown, encoding="utf-8")
 
 
+def save_pdf(output: DraftOutput, path: Path) -> None:
+    try:
+        from reportlab.lib.pagesizes import LETTER
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+    except ImportError as exc:
+        raise ImportError(
+            "PDF export requires reportlab. Install project dependencies with: "
+            "pip install -r requirements.txt"
+        ) from exc
+
+    styles = getSampleStyleSheet()
+    document = SimpleDocTemplate(
+        str(path),
+        pagesize=LETTER,
+        title="Scientific Draft",
+        rightMargin=54,
+        leftMargin=54,
+        topMargin=54,
+        bottomMargin=54,
+    )
+    story = [
+        Paragraph("Scientific Draft", styles["Title"]),
+        Spacer(1, 12),
+        Paragraph("Title", styles["Heading2"]),
+        Paragraph(output.title, styles["BodyText"]),
+        Spacer(1, 12),
+        Paragraph("Abstract", styles["Heading2"]),
+        Paragraph(output.abstract, styles["BodyText"]),
+        Spacer(1, 12),
+        Paragraph("Paper Outline", styles["Heading2"]),
+    ]
+
+    for item in output.outline:
+        story.append(Paragraph(item, styles["BodyText"]))
+        story.append(Spacer(1, 6))
+
+    story.extend(
+        [
+            Spacer(1, 12),
+            Paragraph("Retrieved Documents", styles["Heading2"]),
+        ]
+    )
+    if output.retrieved_documents:
+        for document_name in output.retrieved_documents:
+            story.append(Paragraph(document_name, styles["BodyText"]))
+            story.append(Spacer(1, 4))
+    else:
+        story.append(Paragraph("None", styles["BodyText"]))
+
+    document.build(story)
+
+
 def inspect_references(reference_folder: str | Path) -> dict:
     docs = load_reference_documents(reference_folder)
     summary = {
@@ -139,6 +192,7 @@ def run_pipeline(
     output_dir.mkdir(parents=True, exist_ok=True)
     save_json(output, output_dir / "draft_output.json")
     save_markdown(output, output_dir / "draft_output.md")
+    save_pdf(output, output_dir / "draft_output.pdf")
 
     return output
 

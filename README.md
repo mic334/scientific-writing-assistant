@@ -17,7 +17,7 @@ The project is intentionally scoped as a drafting aid, not a full paper writer. 
 5. Retrieves the top-k most relevant reference documents using cosine similarity.
 6. Builds a structured drafting context.
 7. Generates a first draft of a title, abstract, and outline.
-8. Saves outputs as JSON and Markdown.
+8. Saves outputs as JSON, Markdown, and PDF.
 
 ## What It Does Not Do
 
@@ -129,6 +129,7 @@ Outputs are saved to:
 ```text
 outputs/draft_output.json
 outputs/draft_output.md
+outputs/draft_output.pdf
 ```
 
 ## Inspect Reference Loading
