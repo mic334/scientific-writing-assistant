@@ -122,6 +122,42 @@ def save_pdf(output: DraftOutput, path: Path) -> None:
     document.build(story)
 
 
+def save_docx(output: DraftOutput, path: Path) -> None:
+    try:
+        from docx import Document
+    except ImportError as exc:
+        raise ImportError(
+            "Word export requires python-docx. Install project dependencies with: "
+            "pip install -r requirements.txt"
+        ) from exc
+
+    document = Document()
+    document.add_heading("Scientific Draft", level=1)
+
+    document.add_heading("Title", level=2)
+    document.add_paragraph(output.title)
+
+    document.add_heading("Abstract", level=2)
+    document.add_paragraph(output.abstract)
+
+    document.add_heading("Paper Outline", level=2)
+    for item in output.outline:
+        document.add_paragraph(item, style="List Bullet")
+
+    document.add_heading("Retrieved Documents", level=2)
+    if output.retrieved_documents:
+        for document_name in output.retrieved_documents:
+            document.add_paragraph(document_name, style="List Bullet")
+    else:
+        document.add_paragraph("None")
+
+    document.add_page_break()
+    document.add_heading("Structured Prompt for a Future Local LLM", level=2)
+    document.add_paragraph(output.prompt)
+
+    document.save(path)
+
+
 def inspect_references(reference_folder: str | Path) -> dict:
     docs = load_reference_documents(reference_folder)
     summary = {
@@ -193,6 +229,7 @@ def run_pipeline(
     save_json(output, output_dir / "draft_output.json")
     save_markdown(output, output_dir / "draft_output.md")
     save_pdf(output, output_dir / "draft_output.pdf")
+    save_docx(output, output_dir / "draft_output.docx")
 
     return output
 
