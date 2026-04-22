@@ -31,6 +31,7 @@ def load_user_input_from_config(config_path: Path) -> UserInput:
         methods=list(data.get("methods", [])),
         keywords=list(data.get("keywords", [])),
         reference_docs_folder=str(reference_folder),
+        writing_instructions=str(data.get("writing_instructions", "")),
         top_k=int(data.get("top_k", 3)),
     )
 
@@ -160,6 +161,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--main-findings", help="Semicolon-separated list.")
     parser.add_argument("--methods", help="Semicolon-separated list.")
     parser.add_argument("--keywords", help="Semicolon-separated list.")
+    parser.add_argument("--writing-instructions")
     parser.add_argument("--references", help="Folder containing .md and .txt reference documents.")
     parser.add_argument("--top-k", type=int)
     return parser
@@ -192,6 +194,7 @@ def main() -> None:
             methods=parse_list(args.methods or ""),
             keywords=parse_list(args.keywords or ""),
             reference_docs_folder=args.references or "data/references",
+            writing_instructions=args.writing_instructions or "",
             top_k=args.top_k or 3,
         )
     else:

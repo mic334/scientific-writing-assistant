@@ -9,6 +9,7 @@ def build_query(user_input: UserInput) -> str:
         " ".join(user_input.main_findings),
         " ".join(user_input.methods),
         " ".join(user_input.keywords),
+        user_input.writing_instructions,
         user_input.journal,
     ]
     return " ".join(section for section in sections if section).strip()
@@ -64,6 +65,7 @@ User inputs:
 - Main findings: {"; ".join(user_input.main_findings)}
 - Methods: {"; ".join(user_input.methods)}
 - Keywords: {", ".join(user_input.keywords)}
+- Additional writing instructions: {user_input.writing_instructions or "None provided."}
 
 Retrieved style and theme references:
 {snippets}

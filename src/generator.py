@@ -48,9 +48,7 @@ def generate_abstract(context: DraftingContext) -> str:
     methods = _join_phrase(user_input.methods, "the selected experimental and computational methods")
     keywords = _join_phrase(user_input.keywords, "the relevant scientific concepts")
     focus = str(rules.get("focus", "clear methods and results"))
-
-    abstract = " ".join(
-        [
+    abstract_parts = [
             _sentence(
                 f"This study addresses {user_input.topic}, with emphasis on {keywords}"
             ),
@@ -61,8 +59,8 @@ def generate_abstract(context: DraftingContext) -> str:
             _sentence(
                 "Together, these elements support a coherent first abstract that can be inspected, revised, and expanded without attempting to generate a complete manuscript"
             ),
-        ]
-    )
+    ]
+    abstract = " ".join(part for part in abstract_parts if part)
 
     return _trim_words(abstract, int(rules.get("max_words", 220)))
 
@@ -77,9 +75,15 @@ def generate_outline(context: DraftingContext) -> list[str]:
         f"2. Study objective: state the central aim and connect it to {user_input.journal}.",
         f"3. Methods and materials: summarize {methods} at a level appropriate for an outline.",
         f"4. Key results: organize the draft around {findings}.",
-        "5. Interpretation: explain how the findings advance the topic while staying close to the evidence.",
+        f"5. Interpretation: explain how the findings advance the topic while staying close to the evidence{_instruction_tail(user_input.writing_instructions)}.",
         "6. Journal-facing contribution: clarify novelty, scope, and limitations for the selected audience.",
     ]
+
+
+def _instruction_tail(writing_instructions: str) -> str:
+    if not writing_instructions.strip():
+        return ""
+    return "; apply the additional writing instructions when selecting emphasis and tone"
 
 
 def generate_draft(context: DraftingContext, prompt: str) -> DraftOutput:

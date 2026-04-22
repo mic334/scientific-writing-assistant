@@ -15,6 +15,7 @@
     "excited states",
     "molecular materials"
   ],
+  "writing_instructions": "Emphasize the conceptual novelty and keep the tone cautious, suitable for a first abstract draft.",
   "reference_docs_folder": "data/references",
   "top_k": 3,
   "generation_backend": "template",

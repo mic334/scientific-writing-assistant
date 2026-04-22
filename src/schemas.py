@@ -21,6 +21,7 @@ class UserInput:
     methods: list[str]
     keywords: list[str]
     reference_docs_folder: str
+    writing_instructions: str = ""
     top_k: int = 3
 
 

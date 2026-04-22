@@ -109,6 +109,7 @@ Edit `config.json`:
     "excited states",
     "molecular materials"
   ],
+  "writing_instructions": "Emphasize the conceptual novelty and keep the tone cautious, suitable for a first abstract draft.",
   "reference_docs_folder": "data/references",
   "top_k": 3,
   "generation_backend": "template",
@@ -183,6 +184,7 @@ python src/main.py \
   --main-findings "enhanced excited-state charge separation; long-lived intermediate state" \
   --methods "time-resolved spectroscopy; density functional theory" \
   --keywords "charge transfer; excited states; molecular materials" \
+  --writing-instructions "Emphasize conceptual novelty and avoid overclaiming." \
   --references data/references \
   --top-k 3
 ```
