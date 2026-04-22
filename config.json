@@ -1,0 +1,20 @@
+{
+  "journal": "Generic Scientific Journal",
+  "topic": "photoinduced charge transfer in molecular materials",
+  "main_findings": [
+    "the system shows enhanced excited-state charge separation",
+    "spectroscopic signatures indicate a long-lived intermediate state"
+  ],
+  "methods": [
+    "steady-state spectroscopy",
+    "time-resolved spectroscopy",
+    "density functional theory"
+  ],
+  "keywords": [
+    "charge transfer",
+    "excited states",
+    "molecular materials"
+  ],
+  "reference_docs_folder": "data/references",
+  "top_k": 3
+}
